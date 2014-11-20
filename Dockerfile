@@ -14,11 +14,6 @@ ENV PKG_VER 5.2.5300
 ENV PKG_VERA 5.2
 ENV PKG_DATE 20141111
 
-# download madsonic
-ADD http://www.madsonic.org/download/${PKG_VERA}/${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip /var/madsonic/madsonic.zip
-# download madsonic transcoders
-ADD http://www.madsonic.org/download/transcode/${PKG_DATE}_${PKG_NAME}-transcode_latest_x64.zip /var/madsonic/transcode/transcode.zip
-
 # Add Oracle Java Repo
 RUN echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> /etc/apt/sources.list.d/webupd8team-java.list \
   && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886 \
@@ -30,7 +25,13 @@ RUN apt-get update && apt-get install -y \
   locales \
   oracle-java8-installer \
   oracle-java8-set-default \
-  unzip
+  unzip \
+  wget
+
+# download madsonic
+RUN mkdir -p /var/madsonic/transcode \
+  && wget -O /var/madsonic/madsonic.zip http://www.madsonic.org/download/${PKG_VERA}/${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip \
+  && wget -O /var/madsonic/transcode/transcode.zip http://www.madsonic.org/download/transcode/${PKG_DATE}_${PKG_NAME}-transcode_latest_x64.zip
 
 # Set Locale
 ENV LANG en_US.UTF-8

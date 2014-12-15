@@ -10,9 +10,9 @@ RUN usermod -g 100 nobody
 
 #Set Madsonic Package Information
 ENV PKG_NAME madsonic
-ENV PKG_VER 5.2.5300
+ENV PKG_VER 5.2.5420
 ENV PKG_VERA 5.2
-ENV PKG_DATE 20141111
+ENV PKG_DATE 20141214
 
 # Add Oracle Java Repo
 RUN echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> /etc/apt/sources.list.d/webupd8team-java.list \

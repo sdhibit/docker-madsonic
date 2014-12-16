@@ -1,8 +1,11 @@
-FROM debian:jessie
+FROM debian:sid
 MAINTAINER Steve Hibit <sdhibit@gmail.com>
 
 # Let the container know that there is no tty
 ENV DEBIAN_FRONTEND noninteractive
+
+# Exclude docs and man pages
+ADD excludes /etc/dpkg/dpkg.cfg.d/excludes
 
 # Fix a Debianism of the nobody's uid being 65534
 RUN usermod -u 99 nobody
@@ -14,19 +17,25 @@ ENV PKG_VER 5.2.5420
 ENV PKG_VERA 5.2
 ENV PKG_DATE 20141214
 
-# Add Oracle Java Repo
-RUN echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> /etc/apt/sources.list.d/webupd8team-java.list \
-  && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886 \
-  && echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
-
 # Install Apt Packages
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
   ca-certificates \
   locales \
-  oracle-java8-installer \
-  oracle-java8-set-default \
+  openjdk-8-jre-headless \
   unzip \
-  wget
+  wget \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* \ 
+     /tmp/* \ 
+     /var/tmp/* \
+     /usr/share/man \ 
+     /usr/share/groff \ 
+     /usr/share/info \
+     /usr/share/lintian \ 
+     /usr/share/linda \ 
+     /var/cache/man \
+  && (( find /usr/share/doc -depth -type f ! -name copyright|xargs rm || true )) \
+  && (( find /usr/share/doc -empty|xargs rmdir || true )) 
 
 # download madsonic
 RUN mkdir -p /var/madsonic/transcode \

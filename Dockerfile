@@ -1,27 +1,26 @@
-FROM debian:sid
+FROM phusion/baseimage:0.9.16
 MAINTAINER Steve Hibit <sdhibit@gmail.com>
 
-# Let the container know that there is no tty
+# Use baseimage-docker's init system
+CMD ["/sbin/my_init"]
+
+# Disable SSH
+RUN rm -rf /etc/service/sshd /etc/my_init.d/00_regen_ssh_host_keys.sh
+
+# Set correct environment variables
 ENV DEBIAN_FRONTEND noninteractive
+ENV LC_ALL          C.UTF-8
+ENV LANG            en_US.UTF-8
+ENV LANGUAGE        en_US.UTF-8
 
-# Exclude docs and man pages
-ADD excludes /etc/dpkg/dpkg.cfg.d/excludes
-
-# Fix a Debianism of the nobody's uid being 65534
-RUN usermod -u 99 nobody
-RUN usermod -g 100 nobody
-
-#Set Madsonic Package Information
-ENV PKG_NAME madsonic
-ENV PKG_VER 5.2.5420
-ENV PKG_VERA 5.2
-ENV PKG_DATE 20141214
+# Set user nobody uid and gid
+RUN usermod -u 99 nobody \
+ && usermod -g 100 nobody
 
 # Install Apt Packages
 RUN apt-get update && apt-get install --no-install-recommends -y \
-  ca-certificates \
   locales \
-  openjdk-8-jre-headless \
+  openjdk-7-jre-headless \
   unzip \
   wget \
   && apt-get clean \
@@ -37,17 +36,16 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   && (( find /usr/share/doc -depth -type f ! -name copyright|xargs rm || true )) \
   && (( find /usr/share/doc -empty|xargs rmdir || true )) 
 
-# download madsonic
+#Set Madsonic Package Information
+ENV PKG_NAME madsonic
+ENV PKG_VER 5.2.5420
+ENV PKG_VERA 5.2
+ENV PKG_DATE 20141214
+
+# Download & Install Madsonic
 RUN mkdir -p /var/madsonic/transcode \
   && wget -O /var/madsonic/madsonic.zip http://www.madsonic.org/download/${PKG_VERA}/${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip \
-  && wget -O /var/madsonic/transcode/transcode.zip http://www.madsonic.org/download/transcode/${PKG_DATE}_${PKG_NAME}-transcode_latest_x64.zip
-
-# Set Locale
-ENV LANG en_US.UTF-8
-RUN locale-gen $LANG
-
-# Install Madsonic
-RUN mkdir -p /var/madsonic/transcode \
+  && wget -O /var/madsonic/transcode/transcode.zip http://www.madsonic.org/download/transcode/${PKG_DATE}_${PKG_NAME}-transcode_latest_x64.zip \
   && unzip /var/madsonic/madsonic.zip -d /var/madsonic \
   && unzip /var/madsonic/transcode/transcode.zip -d /var/madsonic/transcode \
   && chown -R nobody:users /var/madsonic \
@@ -55,27 +53,12 @@ RUN mkdir -p /var/madsonic/transcode \
   && rm /var/madsonic/madsonic.zip \
   && rm /var/madsonic/transcode/transcode.zip
 
-# Force Madsonic to run in foreground
-RUN sed -i 's/-jar madsonic-booter.jar > \${LOG} 2>\&1 \&/-jar madsonic-booter.jar > \${LOG} 2>\&1/g' /var/madsonic/madsonic.sh
-
-# Copy start.sh script
-ADD start.sh /start.sh
-
- # apt clean
-RUN apt-get clean \
-  && rm -rf /var/lib/apt/lists/* \
-  && rm -rf /tmp/*
-
-# map /config
 VOLUME /config
-# map /media 
-VOLUME /media
 
-# expose port for http
+# HTTP(S) ports
 EXPOSE 4040
-# expose port for https
 EXPOSE 4050
 
-# Run Program
-USER nobody
-ENTRYPOINT ["/start.sh"]
+# Add services to runit
+ADD madsonic.sh /etc/service/madsonic/run
+RUN chmod +x /etc/service/*/run

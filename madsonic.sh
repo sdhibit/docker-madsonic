@@ -9,7 +9,9 @@ mkdir -p /config/playlists/backup
 mkdir -p /config/transcode
 
 #copy transcode to config directory - transcode directory is subdir of path set from --home flag, do not alter
-cp /var/madsonic/transcode/linux/* /config/transcode/
+#cp /var/madsonic/transcode/* /config/transcode/
+
+
 
 if [ -z "$CONTEXT" ]; then
   CONTEXT=/
@@ -20,6 +22,9 @@ if [ "$SSL" = "yes" ]; then
 else
   PORTS="--port=4040"
 fi
+
+# Latest version of Madsonic 6.0 has invalid carriage returns
+sed -i -e 's/\r$//' /var/madsonic/madsonic.sh
 
 /var/madsonic/madsonic.sh \
   --home=/config \

@@ -13,6 +13,17 @@ ENV LC_ALL          C.UTF-8
 ENV LANG            en_US.UTF-8
 ENV LANGUAGE        en_US.UTF-8
 
+#Set Madsonic Package Information
+ENV APP_NAME madsonic
+ENV APP_VERSION 6.0
+ENV APP_SUBVERSION 7080
+ENV APP_DATE 20150814
+
+ENV APP_BASEURL http://madsonic.org/download
+ENV APP_PKGNAME ${APP_DATE}_${APP_NAME}-${APP_VERSION}.${APP_SUBVERSION}-standalone.tar.gz
+ENV APP_URL ${APP_BASEURL}/${APP_VERSION}/${APP_PKGNAME}
+ENV APP_HOME /var/madsonic
+
 # Set user nobody uid and gid
 RUN usermod -u 99 nobody \
  && usermod -g 100 nobody
@@ -21,8 +32,6 @@ RUN usermod -u 99 nobody \
 RUN apt-get update && apt-get install --no-install-recommends -y \
   locales \
   openjdk-7-jre-headless \
-  unzip \
-  wget \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \ 
      /tmp/* \ 
@@ -36,22 +45,17 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   && (( find /usr/share/doc -depth -type f ! -name copyright|xargs rm || true )) \
   && (( find /usr/share/doc -empty|xargs rmdir || true )) 
 
-#Set Madsonic Package Information
-ENV PKG_NAME madsonic
-ENV PKG_VER 5.2.5420
-ENV PKG_VERA 5.2
-ENV PKG_DATE 20141214
 
 # Download & Install Madsonic
-RUN mkdir -p /var/madsonic/transcode \
-  && wget -O /var/madsonic/madsonic.zip http://www.madsonic.org/download/${PKG_VERA}/${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip \
-  && wget -O /var/madsonic/transcode/transcode.zip http://www.madsonic.org/download/transcode/${PKG_DATE}_${PKG_NAME}-transcode_latest_x64.zip \
-  && unzip /var/madsonic/madsonic.zip -d /var/madsonic \
-  && unzip /var/madsonic/transcode/transcode.zip -d /var/madsonic/transcode \
+RUN mkdir -p "${APP_HOME}" \
+  && curl -kL "${APP_URL}" | tar xz -C "${APP_HOME}" \
+  && mkdir -p "${APP_HOME}/transcode" \
   && chown -R nobody:users /var/madsonic \
-  && chmod -R 755 /var/madsonic \
-  && rm /var/madsonic/madsonic.zip \
-  && rm /var/madsonic/transcode/transcode.zip
+  && chmod -R 755 /var/madsonic
+
+# Force Madsonic to run in foreground
+RUN sed -i 's/-jar madsonic-booter.jar > \${LOG} 2>\&1 \&/-jar madsonic-booter.jar > \${LOG} 2>\&1/g' \
+    /var/madsonic/madsonic.sh
 
 VOLUME /config
 
@@ -62,3 +66,9 @@ EXPOSE 4050
 # Add services to runit
 ADD madsonic.sh /etc/service/madsonic/run
 RUN chmod +x /etc/service/*/run
+
+
+#  && wget -O /var/madsonic/madsonic.zip http://www.madsonic.org/download/${PKG_VERA}/${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip \
+#  && wget -O /var/madsonic/transcode/transcode.zip http://www.madsonic.org/download/transcode/${PKG_DATE}_${PKG_NAME}-transcode_latest_x64.zip \
+#  && unzip /var/madsonic/madsonic.zip -d /var/madsonic \
+#  && unzip /var/madsonic/transcode/transcode.zip -d /var/madsonic/transcode \

@@ -9,7 +9,10 @@ mkdir -p /config/playlists/backup
 mkdir -p /config/transcode
 
 #copy transcode to config directory - transcode directory is subdir of path set from --home flag, do not alter
-cp /var/madsonic/transcode/linux/* /config/transcode/
+cp /var/madsonic/transcode/transcode/* /config/transcode/
+
+# Force Madsonic to run in foreground
+sed -i 's/-jar madsonic-booter.jar > \${LOG} 2>\&1 \&/-jar madsonic-booter.jar > \${LOG} 2>\&1/g' /var/madsonic/madsonic.sh
 
 if [ -z "$CONTEXT" ]; then
   CONTEXT=/
@@ -30,4 +33,3 @@ fi
   --default-playlist-export-folder=/config/playlists/export \
   --default-playlist-backup-folder=/config/playlists/backup \
   ${PORTS}
-

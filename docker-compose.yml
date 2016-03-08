@@ -1,0 +1,14 @@
+version: '2'
+services:
+  madsonic:
+    build: .
+    ports:
+     - "4040:4040"
+     - "4050:4050"
+    volumes:
+     - madsonic-config:/config
+    restart: unless-stopped
+
+volumes:
+  madsonic-config:
+    driver: local

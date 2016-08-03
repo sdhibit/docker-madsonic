@@ -25,7 +25,7 @@ else
   PORTS="--port=4040"
 fi
 
-/var/madsonic/madsonic.sh \
+/sbin/su-exec madsonic /var/madsonic/madsonic.sh \
   --home=/config \
   --context-path=$CONTEXT \
   --default-music-folder=/media \

@@ -1,4 +1,4 @@
-FROM alpine:3.3
+FROM sdhibit/alpine-runit:3.4
 MAINTAINER Steve Hibit <sdhibit@gmail.com>
 
 # Install apk packages
@@ -44,11 +44,8 @@ VOLUME ["/config"]
 EXPOSE 4040
 EXPOSE 4050
 
-# Add run script
-ADD madsonic.sh /madsonic.sh
-RUN chmod +x /madsonic.sh
-
-USER madsonic
 WORKDIR /var/madsonic
 
-CMD ["/madsonic.sh"]
+# Add services to runit
+ADD madsonic.sh /etc/service/madsonic/run
+RUN chmod +x /etc/service/*/run

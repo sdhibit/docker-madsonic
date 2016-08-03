@@ -13,7 +13,7 @@ cp /var/madsonic/transcode/transcode/* /config/transcode/
 chmod +x /config/transcode/*
 
 # Force Madsonic to run in foreground
-sed -i 's/-jar madsonic-booter.jar > \${LOG} 2>\&1 \&/-jar madsonic-booter.jar > \${LOG} 2>\&1/g' /var/madsonic/madsonic.sh
+sed -i 's/-jar madsonic-booter.jar > \${LOG} 2>\&1 \&/-jar madsonic-booter.jar/g' /var/madsonic/madsonic.sh
 
 if [ -z "$CONTEXT" ]; then
   CONTEXT=/

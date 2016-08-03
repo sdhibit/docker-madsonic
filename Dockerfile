@@ -11,9 +11,9 @@ RUN apk --update upgrade \
 
 # Set Madsonic Package Information
 ENV PKG_NAME madsonic 
-ENV PKG_VER 6.1.8280 
+ENV PKG_VER 6.1.8550 
 ENV PKG_VERA 6.1 
-ENV PKG_DATE 20160505 
+ENV PKG_DATE 20160727 
 ENV APP_BASEURL http://www.madsonic.org/download 
 ENV APP_PKGNAME ${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip 
 ENV TRAN_PKGNAME ${PKG_DATE}_${PKG_NAME}-transcode-linux-x64.zip 

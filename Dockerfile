@@ -1,19 +1,21 @@
 FROM sdhibit/alpine-runit:3.4
 MAINTAINER Steve Hibit <sdhibit@gmail.com>
 
+RUN addgroup -S madsonic \
+ && adduser -SHG madsonic madsonic
+
 # Install apk packages
 RUN apk --update upgrade \
- && apk add \
+ && apk --no-cache add \
   openjdk8-jre-base \
   unzip \
-  wget \
- && rm /var/cache/apk/*
+  wget 
 
 # Set Madsonic Package Information
 ENV PKG_NAME madsonic 
-ENV PKG_VER 6.1.8550 
+ENV PKG_VER 6.1.8700 
 ENV PKG_VERA 6.1 
-ENV PKG_DATE 20160727 
+ENV PKG_DATE 20161001 
 ENV APP_BASEURL http://www.madsonic.org/download 
 ENV APP_PKGNAME ${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip 
 ENV TRAN_PKGNAME ${PKG_DATE}_${PKG_NAME}-transcode-linux-x64.zip 
@@ -30,10 +32,8 @@ RUN mkdir -p "${APP_PATH}/transcode" \
  && rm "${APP_PATH}/madsonic.zip" \
  && rm "${APP_PATH}/transcode/transcode.zip" 
 
-# Create user and change ownership
+# Change ownership
 RUN mkdir /config \
- && addgroup -g 666 -S madsonic \
- && adduser -u 666 -SHG madsonic madsonic \
  && chown -R madsonic:madsonic \
     ${APP_PATH} \
     "/config"

@@ -1,4 +1,4 @@
-FROM sdhibit/alpine-runit:3.4
+FROM sdhibit/alpine-runit:3.5
 MAINTAINER Steve Hibit <sdhibit@gmail.com>
 
 RUN addgroup -S madsonic \
@@ -13,9 +13,9 @@ RUN apk --update upgrade \
 
 # Set Madsonic Package Information
 ENV PKG_NAME madsonic 
-ENV PKG_VER 6.1.8700 
-ENV PKG_VERA 6.1 
-ENV PKG_DATE 20160915 
+ENV PKG_VER 6.2.9080
+ENV PKG_VERA 6.2 
+ENV PKG_DATE 20161222 
 ENV APP_BASEURL http://www.madsonic.org/download 
 ENV APP_PKGNAME ${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip 
 ENV TRAN_PKGNAME ${PKG_DATE}_${PKG_NAME}-transcode-linux-x64.zip 

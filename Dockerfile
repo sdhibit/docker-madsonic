@@ -1,4 +1,4 @@
-FROM sdhibit/alpine-runit:3.5
+FROM sdhibit/alpine-runit:3.6
 MAINTAINER Steve Hibit <sdhibit@gmail.com>
 
 RUN addgroup -S madsonic \

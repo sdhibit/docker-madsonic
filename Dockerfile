@@ -1,51 +1,44 @@
-FROM sdhibit/alpine-runit:3.6
-MAINTAINER Steve Hibit <sdhibit@gmail.com>
+FROM alpine:latest as builder
 
-RUN addgroup -S madsonic \
- && adduser -SHG madsonic madsonic
+ARG APP_VERSION=6.2
+ARG APP_REVISION=9080
+ARG APP_DATE=20161222
 
-# Install apk packages
+ENV APP_NAME madsonic
+ENV APP_BASEURL http://www.madsonic.org/download 
+ENV APP_PKGNAME ${APP_DATE}_${APP_NAME}-${APP_VERSION}.${APP_REVISION}-war-jspc.zip 
+ENV TRAN_PKGNAME ${APP_DATE}_${APP_NAME}-transcode-linux-x64.zip 
+ENV APP_URL ${APP_BASEURL}/${APP_VERSION}/${APP_PKGNAME} 
+ENV TRAN_URL ${APP_BASEURL}/transcode/${TRAN_PKGNAME}
+
 RUN apk --update upgrade \
  && apk --no-cache add \
-  openjdk8-jre-base \
-  unzip \
-  wget 
+    wget \
+    unzip
 
-# Set Madsonic Package Information
-ENV PKG_NAME madsonic 
-ENV PKG_VER 6.2.9080
-ENV PKG_VERA 6.2 
-ENV PKG_DATE 20161222 
-ENV APP_BASEURL http://www.madsonic.org/download 
-ENV APP_PKGNAME ${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip 
-ENV TRAN_PKGNAME ${PKG_DATE}_${PKG_NAME}-transcode-linux-x64.zip 
-ENV APP_URL ${APP_BASEURL}/${PKG_VERA}/${APP_PKGNAME} 
-ENV TRAN_URL ${APP_BASEURL}/transcode/${TRAN_PKGNAME}
-ENV APP_PATH /var/madsonic
+RUN mkdir -p /app/transcode \
+ && wget -O "/tmp/madsonic.zip" ${APP_URL} \
+ && wget -O "/tmp/transcode.zip" ${TRAN_URL} \ 
+ && unzip "/tmp/madsonic.zip" -d "/app" \
+ && unzip "/tmp/transcode.zip" -d "/app/transcode" \
+ && rm "/tmp/madsonic.zip" \
+ && rm "/tmp/transcode.zip" 
 
-# Download & Install Madsonic
-RUN mkdir -p "${APP_PATH}/transcode" \
- && wget -O "${APP_PATH}/madsonic.zip" ${APP_URL} \
- && wget -O "${APP_PATH}/transcode/transcode.zip" ${TRAN_URL} \ 
- && unzip "${APP_PATH}/madsonic.zip" -d ${APP_PATH} \
- && unzip "${APP_PATH}/transcode/transcode.zip" -d "${APP_PATH}/transcode" \
- && rm "${APP_PATH}/madsonic.zip" \
- && rm "${APP_PATH}/transcode/transcode.zip" 
+#--------------------------------------------
 
-# Change ownership
-RUN mkdir /config \
- && chown -R madsonic:madsonic \
-    ${APP_PATH} \
-    "/config"
+FROM sdhibit/alpine-s6:3.7
+LABEL maintainer="Steve Hibit <sdhibit@gmail.com>"
+
+COPY --from=builder /app ${APP_PATH}
+
+RUN apk --update upgrade \
+ && apk --no-cache add \
+    --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
+    libressl \
+    openjdk8-jre-base
 
 VOLUME ["/config"]
 
 # HTTP ports
 EXPOSE 4040
 EXPOSE 4050
-
-WORKDIR /var/madsonic
-
-# Add services to runit
-ADD madsonic.sh /etc/service/madsonic/run
-RUN chmod +x /etc/service/*/run

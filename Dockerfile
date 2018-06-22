@@ -37,6 +37,10 @@ RUN apk --update upgrade \
     libressl \
     openjdk8-jre-base
 
+COPY root /
+
+RUN chmod +x /etc/services.d/*/run
+
 VOLUME ["/config"]
 
 # HTTP ports

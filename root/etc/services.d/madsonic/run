@@ -1,0 +1,71 @@
+#!/usr/bin/with-contenv sh
+
+APP_UID=${APP_UID:-1000}
+APP_GID=${APP_GID:-1000}
+
+APP_USER=${APP_USER:-appuser}
+KEEP_TRANSCODE=${KEEP_TRANSCODE:-"false"}
+
+MADSONIC_HOME=/config
+MADSONIC_HOST=0.0.0.0
+MADSONIC_PORT=4040
+MADSONIC_HTTPS_PORT=0
+MADSONIC_CONTEXT_PATH=${CONTEXT:-"/"}
+MADSONIC_INIT_MEMORY=256
+MADSONIC_MAX_MEMORY=512
+MADSONIC_DEFAULT_MUSIC_FOLDER=/media
+MADSONIC_DEFAULT_UPLOAD_FOLDER=/config/media/incoming
+MADSONIC_DEFAULT_PODCAST_FOLDER=/config/media/podcast
+MADSONIC_DEFAULT_PLAYLIST_IMPORT_FOLDER=/config/playlists/import
+MADSONIC_DEFAULT_PLAYLIST_EXPORT_FOLDER=/config/playlists/export
+MADSONIC_DEFAULT_PLAYLIST_BACKUP_FOLDER=/config/playlists/backup
+MADSONIC_DEFAULT_TRANSCODE_FOLDER=/app/transcode
+MADSONIC_DEFAULT_TIMEZONE=
+MADSONIC_PIDFILE=
+MADSONIC_UPDATE=true
+MADSONIC_GZIP=
+MADSONIC_DB=
+quiet=0
+
+mkdir -p ${MADSONIC_DEFAULT_UPLOAD_FOLDER}
+mkdir -p ${MADSONIC_DEFAULT_PODCAST_FOLDER}
+mkdir -p ${MADSONIC_DEFAULT_PLAYLIST_IMPORT_FOLDER}
+mkdir -p ${MADSONIC_DEFAULT_PLAYLIST_EXPORT_FOLDER}
+mkdir -p ${MADSONIC_DEFAULT_PLAYLIST_BACKUP_FOLDER}
+mkdir -p ${MADSONIC_DEFAULT_TRANSCODE_FOLDER}
+
+# Use JAVA_HOME if set, otherwise assume java is in the path.
+JAVA=java
+if [ -e "${JAVA_HOME}" ]
+    then
+    JAVA=${JAVA_HOME}/bin/java
+fi
+
+# Create Madsonic home directory.
+mkdir -p ${MADSONIC_HOME}
+LOG=${MADSONIC_HOME}/madsonic_sh.log
+rm -f ${LOG}
+
+s6-setuidgid appuser ${JAVA} 
+  -Xms${MADSONIC_INIT_MEMORY}m \
+  -Xmx${MADSONIC_MAX_MEMORY}m \
+  -Dmadsonic.home=${MADSONIC_HOME} \
+  -Dmadsonic.host=${MADSONIC_HOST} \
+  -Dmadsonic.port=${MADSONIC_PORT} \
+  -Dmadsonic.httpsPort=${MADSONIC_HTTPS_PORT} \
+  -Dmadsonic.contextPath=${MADSONIC_CONTEXT_PATH} \
+  -Dmadsonic.defaultMusicFolder=${MADSONIC_DEFAULT_MUSIC_FOLDER} \
+  -Dmadsonic.defaultUploadFolder=${MADSONIC_DEFAULT_UPLOAD_FOLDER} \
+  -Dmadsonic.defaultPodcastFolder=${MADSONIC_DEFAULT_PODCAST_FOLDER} \
+  -Dmadsonic.defaultPlaylistImportFolder=${MADSONIC_DEFAULT_PLAYLIST_IMPORT_FOLDER} \
+  -Dmadsonic.defaultPlaylistExportFolder=${MADSONIC_DEFAULT_PLAYLIST_EXPORT_FOLDER} \
+  -Dmadsonic.defaultPlaylistBackupFolder=${MADSONIC_DEFAULT_PLAYLIST_BACKUP_FOLDER} \
+  -Dmadsonic.defaultTranscodeFolder=${MADSONIC_DEFAULT_TRANSCODE_FOLDER} \
+  -Duser.timezone=${MADSONIC_DEFAULT_TIMEZONE} \
+  -Dmadsonic.update=${MADSONIC_UPDATE} \
+  -Dmadsonic.gzip=${MADSONIC_GZIP} \
+  -Dmadsonic.db="${MADSONIC_DB}" \
+  -Djava.awt.headless=true \
+  -Djava.net.preferIPv4Stack=true \
+  -verbose:gc \
+  -jar madsonic.war > ${LOG} 2>&1

@@ -4,25 +4,17 @@ ARG APP_VERSION=6.2
 ARG APP_REVISION=9080
 ARG APP_DATE=20161222
 
-ENV APP_NAME madsonic
-ENV APP_BASEURL http://www.madsonic.org/download 
-ENV APP_PKGNAME ${APP_DATE}_${APP_NAME}-${APP_VERSION}.${APP_REVISION}-war-jspc.zip 
-ENV TRAN_PKGNAME ${APP_DATE}_${APP_NAME}-transcode-linux-x64.zip 
-ENV APP_URL ${APP_BASEURL}/${APP_VERSION}/${APP_PKGNAME} 
-ENV TRAN_URL ${APP_BASEURL}/transcode/${TRAN_PKGNAME}
-
+ARG APP_NAME=madsonic
+ARG APP_BASEURL="http://www.madsonic.org/download"
+ARG APP_PKGNAME="${APP_DATE}_${APP_NAME}-${APP_VERSION}.${APP_REVISION}-standalone.tar.gz" 
+ARG APP_URL="${APP_BASEURL}/${APP_VERSION}/${APP_PKGNAME}"
+ 
 RUN apk --update upgrade \
  && apk --no-cache add \
-    wget \
-    unzip
+    curl
 
-RUN mkdir -p /app/transcode \
- && wget -O "/tmp/madsonic.zip" ${APP_URL} \
- && wget -O "/tmp/transcode.zip" ${TRAN_URL} \ 
- && unzip "/tmp/madsonic.zip" -d "/app" \
- && unzip "/tmp/transcode.zip" -d "/app/transcode" \
- && rm "/tmp/madsonic.zip" \
- && rm "/tmp/transcode.zip" 
+RUN mkdir -p /app \ 
+ && curl -sSL ${APP_URL} | tar xfz - -C /app
 
 #--------------------------------------------
 
@@ -34,12 +26,14 @@ COPY --from=builder /app ${APP_PATH}
 RUN apk --update upgrade \
  && apk --no-cache add \
     --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
+    ffmpeg \
+    lame \
     libressl \
     openjdk8-jre-base
 
 COPY root /
 
-RUN chmod +x /etc/services.d/*/run
+RUN chmod -R +x /etc/services.d/*/run
 
 VOLUME ["/config"]
 

@@ -1,54 +1,42 @@
-FROM alpine:3.3
-MAINTAINER Steve Hibit <sdhibit@gmail.com>
+FROM alpine:latest as builder
 
-# Install apk packages
+ARG APP_VERSION=6.2
+ARG APP_REVISION=9080
+ARG APP_DATE=20161222
+
+ARG APP_NAME=madsonic
+ARG APP_BASEURL="http://www.madsonic.org/download"
+ARG APP_PKGNAME="${APP_DATE}_${APP_NAME}-${APP_VERSION}.${APP_REVISION}-standalone.tar.gz" 
+ARG APP_URL="${APP_BASEURL}/${APP_VERSION}/${APP_PKGNAME}"
+ 
 RUN apk --update upgrade \
- && apk add \
-  openjdk8-jre-base \
-  unzip \
-  wget \
- && rm /var/cache/apk/*
+ && apk --no-cache add \
+    curl
 
-# Set Madsonic Package Information
-ENV PKG_NAME madsonic 
-ENV PKG_VER 6.1.8120 
-ENV PKG_VERA 6.1 
-ENV PKG_DATE 20160304 
-ENV APP_BASEURL http://www.madsonic.org/download 
-ENV APP_PKGNAME ${PKG_DATE}_${PKG_NAME}-${PKG_VER}-standalone.zip 
-ENV TRAN_PKGNAME ${PKG_DATE}_${PKG_NAME}-transcode-linux-x64.zip 
-ENV APP_URL ${APP_BASEURL}/${PKG_VERA}/${APP_PKGNAME} 
-ENV TRAN_URL ${APP_BASEURL}/transcode/${TRAN_PKGNAME}
-ENV APP_PATH /var/madsonic
+RUN mkdir -p /app \ 
+ && curl -sSL ${APP_URL} | tar xfz - -C /app
 
-# Download & Install Madsonic
-RUN mkdir -p "${APP_PATH}/transcode" \
- && wget -O "${APP_PATH}/madsonic.zip" ${APP_URL} \
- && wget -O "${APP_PATH}/transcode/transcode.zip" ${TRAN_URL} \ 
- && unzip "${APP_PATH}/madsonic.zip" -d ${APP_PATH} \
- && unzip "${APP_PATH}/transcode/transcode.zip" -d "${APP_PATH}/transcode" \
- && rm "${APP_PATH}/madsonic.zip" \
- && rm "${APP_PATH}/transcode/transcode.zip" 
+#--------------------------------------------
 
-# Create user and change ownership
-RUN mkdir /config \
- && addgroup -g 666 -S madsonic \
- && adduser -u 666 -SHG madsonic madsonic \
- && chown -R madsonic:madsonic \
-    ${APP_PATH} \
-    "/config"
+FROM sdhibit/alpine-s6:3.7
+LABEL maintainer="Steve Hibit <sdhibit@gmail.com>"
+
+COPY --from=builder /app ${APP_PATH}
+
+RUN apk --update upgrade \
+ && apk --no-cache add \
+    --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
+    ffmpeg \
+    lame \
+    libressl \
+    openjdk8-jre-base
+
+COPY root /
+
+RUN chmod -R +x /etc/services.d/*/run
 
 VOLUME ["/config"]
 
 # HTTP ports
 EXPOSE 4040
 EXPOSE 4050
-
-# Add run script
-ADD madsonic.sh /madsonic.sh
-RUN chmod +x /madsonic.sh
-
-USER madsonic
-WORKDIR /var/madsonic
-
-CMD ["/madsonic.sh"]
